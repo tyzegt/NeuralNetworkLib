@@ -4,20 +4,29 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ILGPU.Runtime;
+using ILGPU;
+using System.Diagnostics;
 
 namespace Tyzegt.NN
 {
     public class NeuralNetwork
     {
         private List<Matrix> weights;
-        private double learningRate;
+        private float learningRate;
+        Context context = Context.CreateDefault();
+        IEnumerable<Device> cudaDevices;
+        Accelerator accelerator;
 
         /// <summary>
         /// Topology represents amount of neurons in each layer, for example {4,2,2,1} means 4 neurons at input layer, 
         /// 2 neurons at first hidden layer, 2 neurons at second, and one neuron at output layer.
         /// </summary>
-        public NeuralNetwork(double learningRate, params int[] topology)
+        public NeuralNetwork(float learningRate, params int[] topology)
         {
+            cudaDevices = context.Devices.Where(x => x.AcceleratorType == AcceleratorType.Cuda);
+            accelerator = cudaDevices.Any() ? cudaDevices.First().CreateAccelerator(context) : null;
+
             this.learningRate = learningRate;
 
             weights = new List<Matrix>();
@@ -29,7 +38,7 @@ namespace Tyzegt.NN
             }
         }
 
-        public void Train(double[] inputsList, double[] targetsList)
+        public void Train(float[] inputsList, float[] targetsList)
         {
             var inputs = new Matrix(inputsList);
             var targets = new Matrix(targetsList);
@@ -42,29 +51,29 @@ namespace Tyzegt.NN
 
             for (int i = weights.Count - 1; i >= 0; i--)
             {
-                var deltas = Matrix.Dot(currentErrors * outputs[i+1] * (1 - outputs[i + 1]), Matrix.Transpose(outputs[i])) * learningRate;
-                var newErrors = Matrix.Dot(Matrix.Transpose(weights[i]), currentErrors);
+                var deltas = Matrix.Dot(currentErrors * outputs[i+1] * (1 - outputs[i + 1]), Matrix.Transpose(outputs[i]), accelerator) * learningRate;
+                var newErrors = Matrix.Dot(Matrix.Transpose(weights[i]), currentErrors, accelerator);
                 weights[i] += deltas;
                 currentErrors = newErrors;
             }
 
         }
 
-        public double[] Query(params double[] inputValues)
+        public float[] Query(params float[] inputValues)
         {
             List<Matrix> outputs = FeedForward(inputValues);
 
             return outputs.Last().ToArray();
         }
 
-        private List<Matrix> FeedForward(double[] inputValues)
+        private List<Matrix> FeedForward(float[] inputValues)
         {
             List<Matrix> outputs = new List<Matrix>();
             outputs.Add(new Matrix(inputValues));         // input layer
 
             foreach (var m in weights)
             {
-                var currentOutputs = Matrix.Dot(m, outputs.Last());
+                var currentOutputs = Matrix.Dot(m, outputs.Last(), accelerator);
                 ApplyActivationFunction(currentOutputs);
                 outputs.Add(currentOutputs);
             }
@@ -77,7 +86,7 @@ namespace Tyzegt.NN
             var r = new Random();
 
             m.ProcessFunctionOverData((i, j) =>
-                m[i,j] = r.NextDouble() - 0.5);
+                m[i,j] = (float)((float)r.NextDouble() - 0.5));
         }
 
         private void ApplyActivationFunction(Matrix m)
@@ -86,9 +95,9 @@ namespace Tyzegt.NN
                 m[i, j] = ActivationFunction(m[i, j]));
         }
 
-        private double ActivationFunction(double x)
+        private float ActivationFunction(float x)
         {
-            return 1.0 / (1.0 + Math.Pow(Math.E, -x));
+            return (float)(1.0 / (1.0 + Math.Pow(Math.E, -x)));
         }
     }
 }
