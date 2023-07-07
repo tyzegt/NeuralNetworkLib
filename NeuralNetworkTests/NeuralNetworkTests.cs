@@ -107,6 +107,23 @@ namespace Tyzegt.NN.Tests
         }
 
         [TestMethod()]
+        public void NetworkMutationTest()
+        {
+            var n1 = new NeuralNetwork(0.3f, 2, 2, 2);
+            var n2 = new NeuralNetwork(n1);
+
+            n1.Mutate(1, 1);
+
+            var r1 = n1.Query(0.1f, 0.9f);
+            var r2 = n2.Query(0.1f, 0.9f);
+
+            for (int i = 0; i < r1.Length; i++)
+            {
+                Assert.AreNotEqual(r1[i], r2[i]);
+            }
+        }
+
+        [TestMethod()]
         public void NetworkCopyWeightsTest()
         {
             var n1 = new NeuralNetwork(0.3f, 2, 2, 2);

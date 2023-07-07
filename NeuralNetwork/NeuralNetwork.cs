@@ -74,6 +74,25 @@ namespace Tyzegt.NN
 
         }
 
+        public void Mutate(float mutationRate, float mutationStrength)
+        {
+            Random r = new Random();
+            foreach (var matrix in Weights) {
+                for (int i = 0; i < matrix.M; i++)
+                {
+                    for (int j = 0; j < matrix.N; j++)
+                    {
+                        if(r.NextSingle() < mutationRate)
+                        {
+                            var value = r.NextSingle() * mutationStrength;
+                            if (r.Next(2) == 0) value = -value;
+                            matrix[i,j] += value;
+                        }
+                    }
+                }
+            }
+        }
+
         public void Train(float[] inputsList, float[] targetsList)
         {
             var inputs = new Matrix(inputsList);
@@ -135,5 +154,6 @@ namespace Tyzegt.NN
         {
             return (float)(1.0 / (1.0 + Math.Pow(Math.E, -x)));
         }
+
     }
 }
