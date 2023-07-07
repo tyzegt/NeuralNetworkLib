@@ -7,16 +7,18 @@ using System.Threading.Tasks;
 using ILGPU.Runtime;
 using ILGPU;
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 namespace Tyzegt.NN
 {
     public class NeuralNetwork
     {
-        private List<Matrix> weights;
-        private float learningRate;
+        public List<Matrix> Weights { get; set; }
+        public float LearningRate { get; set; }
         Context context = Context.CreateDefault();
         IEnumerable<Device> cudaDevices;
         Accelerator accelerator;
+        public int[] Topology { get; set; }
 
         /// <summary>
         /// Topology represents amount of neurons in each layer, for example {4,2,2,1} means 4 neurons at input layer, 
@@ -24,18 +26,52 @@ namespace Tyzegt.NN
         /// </summary>
         public NeuralNetwork(float learningRate, params int[] topology)
         {
+            Init(learningRate, topology);
+            for (int i = 0; i < topology.Length - 1; i++)
+            {
+                var newMatrix = new Matrix(topology[i + 1], topology[i]);
+                SetRandomWeights(newMatrix);
+                Weights.Add(newMatrix);
+            }
+        }
+
+        [JsonConstructor]
+        public NeuralNetwork()
+        {
+        }
+
+        /// <summary>
+        /// Create new neural network and copy weights and learning rate from template network
+        /// </summary>
+        public NeuralNetwork(NeuralNetwork template)
+        {
+            Init(template.LearningRate, template.Topology);
+            for (int i = 0; i < Topology.Length - 1; i++)
+            {
+                var newMatrix = new Matrix(Topology[i + 1], Topology[i]);
+                
+                for (int m = 0; m < newMatrix.M; m++)
+                {
+                    for (int n = 0; n < newMatrix.N; n++)
+                    {
+                        newMatrix[m,n] = template.Weights[i][m,n];
+                    }
+                }
+
+                Weights.Add(newMatrix);
+            }
+        }
+
+        private void Init(float learningRate, params int[] topology)
+        {
+            this.Topology = topology;
             cudaDevices = context.Devices.Where(x => x.AcceleratorType == AcceleratorType.Cuda);
             accelerator = cudaDevices.Any() ? cudaDevices.First().CreateAccelerator(context) : null;
 
-            this.learningRate = learningRate;
+            this.LearningRate = learningRate;
 
-            weights = new List<Matrix>();
-            for (int i = 0; i < topology.Length - 1; i++)
-            {
-                var newMatrix = new Matrix(topology[i+1], topology[i]);
-                SetRandomWeights(newMatrix);
-                weights.Add(newMatrix);
-            }
+            Weights = new List<Matrix>();
+
         }
 
         public void Train(float[] inputsList, float[] targetsList)
@@ -49,11 +85,11 @@ namespace Tyzegt.NN
 
             var currentErrors = new Matrix(currentErrorList);
 
-            for (int i = weights.Count - 1; i >= 0; i--)
+            for (int i = Weights.Count - 1; i >= 0; i--)
             {
-                var deltas = Matrix.Dot(currentErrors * outputs[i+1] * (1 - outputs[i + 1]), Matrix.Transpose(outputs[i]), accelerator) * learningRate;
-                var newErrors = Matrix.Dot(Matrix.Transpose(weights[i]), currentErrors, accelerator);
-                weights[i] += deltas;
+                var deltas = Matrix.Dot(currentErrors * outputs[i+1] * (1 - outputs[i + 1]), Matrix.Transpose(outputs[i]), accelerator) * LearningRate;
+                var newErrors = Matrix.Dot(Matrix.Transpose(Weights[i]), currentErrors, accelerator);
+                Weights[i] += deltas;
                 currentErrors = newErrors;
             }
 
@@ -71,7 +107,7 @@ namespace Tyzegt.NN
             List<Matrix> outputs = new List<Matrix>();
             outputs.Add(new Matrix(inputValues));         // input layer
 
-            foreach (var m in weights)
+            foreach (var m in Weights)
             {
                 var currentOutputs = Matrix.Dot(m, outputs.Last(), accelerator);
                 ApplyActivationFunction(currentOutputs);

@@ -4,13 +4,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Tyzegt.NN.Matrices
 {
     public class Matrix
     {
-        private float[,] data;
+        public float[,] Data { get; set; }
 
         private int m;
         private int n;
@@ -18,29 +19,37 @@ namespace Tyzegt.NN.Matrices
         /// <summary>
         /// Rows count
         /// </summary>// Строки
-        public int M { get => m; }
+        public int M { get => m; set => m = value; }
 
 
         /// <summary>
         /// Columns count
         /// </summary>
-        public int N { get => n; }
+        public int N { get => n; set => n = value; }
+
+
+        [JsonConstructor]
+        public Matrix()
+        {
+
+        }
 
         public Matrix(int m, int n)
         {
             this.m = m;
             this.n = n;
-            data = new float[m, n];
+            Data = new float[m, n];
         }
+
 
         public Matrix(float[] inputValues)
         {
             m = inputValues.Length;
             n = 1;
-            data = new float[m, n];
+            Data = new float[m, n];
             for (int i = 0; i < m; i++)
             {
-                data[i, 0] = inputValues[i];
+                Data[i, 0] = inputValues[i];
             }
         }
 
@@ -57,18 +66,18 @@ namespace Tyzegt.NN.Matrices
 
         private void SetToZero(int i, int j)
         {
-            data[i, j] = 0;
+            Data[i, j] = 0;
         }
 
         public float this[int x, int y]
         {
             get
             {
-                return data[x, y];
+                return Data[x, y];
             }
             set
             {
-                data[x, y] = value;
+                Data[x, y] = value;
             }
         }
 
@@ -123,10 +132,10 @@ namespace Tyzegt.NN.Matrices
         {
             var result = new Matrix(matrix.M, matrix2.N);
 
-            if (accelerator != null && matrix.data.Length > 1000) // experimental
+            if (accelerator != null && matrix.Data.Length > 1000) // experimental
             {
-                var acceleratedResult = MatrixMultiplyAccelerated(accelerator, matrix.data, matrix2.data);
-                result.data = acceleratedResult;
+                var acceleratedResult = MatrixMultiplyAccelerated(accelerator, matrix.Data, matrix2.Data);
+                result.Data = acceleratedResult;
                 return result;
             }
 
@@ -222,7 +231,7 @@ namespace Tyzegt.NN.Matrices
             var result = new float[M];
             for (int i = 0; i < result.Length; i++)
             {
-                result[i] = data[i, 0];
+                result[i] = Data[i, 0];
             }
 
             return result;
@@ -231,7 +240,7 @@ namespace Tyzegt.NN.Matrices
         public void SubstractAllValuesFrom(float value)
         {
             this.ProcessFunctionOverData((i, j) =>
-                this[i, j] = value - data[i, j]);
+                this[i, j] = value - Data[i, j]);
         }
     }
 }

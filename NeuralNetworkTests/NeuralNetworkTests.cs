@@ -1,11 +1,13 @@
 ﻿using ILGPU;
 using ILGPU.Runtime;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 using Tyzegt.NN.Matrices;
@@ -103,12 +105,36 @@ namespace Tyzegt.NN.Tests
             }
             Assert.IsTrue(correctCount == 4);
         }
-        private void SetRandomWeights(Matrix m)
-        {
-            var r = new Random();
 
-            m.ProcessFunctionOverData((i, j) =>
-                m[i, j] = (float)((float)r.NextDouble() - 0.5));
+        [TestMethod()]
+        public void NetworkCopyWeightsTest()
+        {
+            var n1 = new NeuralNetwork(0.3f, 2, 2, 2);
+            var n2 = new NeuralNetwork(n1);
+
+            var r1 = n1.Query(0.1f, 0.9f);
+            var r2 = n2.Query(0.1f, 0.9f);
+
+            for (int i = 0; i < r1.Length; i++)
+            {
+                Assert.AreEqual(r1[i], r2[i]);
+            }
+        }
+
+        [TestMethod()]
+        public void NetworkSerializationTest()
+        {
+            var n1 = new NeuralNetwork(0.3f, 2, 2, 2);
+            var s1 = JsonConvert.SerializeObject(n1);
+            var n2 = JsonConvert.DeserializeObject<NeuralNetwork>(s1);
+
+            var r1 = n1.Query(0.1f, 0.9f);
+            var r2 = n2.Query(0.1f, 0.9f);
+
+            for (int i = 0; i < r1.Length; i++)
+            {
+                Assert.AreEqual(r1[i], r2[i]);
+            }
         }
 
         [TestMethod()]
