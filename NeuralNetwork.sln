@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NeuralNetwork", "NeuralNetw
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NeuralNetworkTests", "NeuralNetworkTests\NeuralNetworkTests.csproj", "{D1174D1B-CC42-408F-9EDB-1FF783CC7310}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartSnake", "SmartSnake\SmartSnake.csproj", "{54AED20A-9DCF-4644-9604-88C83D5FB82A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{D1174D1B-CC42-408F-9EDB-1FF783CC7310}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1174D1B-CC42-408F-9EDB-1FF783CC7310}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1174D1B-CC42-408F-9EDB-1FF783CC7310}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54AED20A-9DCF-4644-9604-88C83D5FB82A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54AED20A-9DCF-4644-9604-88C83D5FB82A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54AED20A-9DCF-4644-9604-88C83D5FB82A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54AED20A-9DCF-4644-9604-88C83D5FB82A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
