@@ -15,9 +15,9 @@ namespace Tyzegt.NN
     {
         public List<Matrix> Weights { get; set; }
         public float LearningRate { get; set; }
-        Context context = Context.CreateDefault();
-        IEnumerable<Device> cudaDevices;
-        Accelerator accelerator;
+        static Context context = Context.CreateDefault();
+        static IEnumerable<Device> cudaDevices = context.Devices.Where(x => x.AcceleratorType == AcceleratorType.Cuda);
+        static Accelerator accelerator = cudaDevices.Any() ? cudaDevices.First().CreateAccelerator(context) : null;
         public int[] Topology { get; set; }
 
         /// <summary>
@@ -65,8 +65,6 @@ namespace Tyzegt.NN
         private void Init(float learningRate, params int[] topology)
         {
             this.Topology = topology;
-            cudaDevices = context.Devices.Where(x => x.AcceleratorType == AcceleratorType.Cuda);
-            accelerator = cudaDevices.Any() ? cudaDevices.First().CreateAccelerator(context) : null;
 
             this.LearningRate = learningRate;
 

@@ -199,6 +199,38 @@ namespace Tyzegt.NN.Tests
             Assert.AreEqual(Math.Round(d2[2, 0], 2), 0.62);
         }
 
+        [TestMethod()]
+        public void MatrixDotCudaMultitaskTest()
+        {
+            var m1 = new Matrix(110, 110);
+            m1[0, 0] = 1;
+            m1[0, 1] = 2;
+            m1[1, 0] = 3;
+            m1[1, 1] = 4;
+            var m2 = new Matrix(110, 110);
+            m2[0, 0] = 5;
+            m2[0, 1] = 6;
+            m2[1, 0] = 7;
+            m2[1, 1] = 8;
+            var m11 = new Matrix(110, 110);
+            var m22 = new Matrix(110, 110);
+            var m111 = new Matrix(110, 110);
+            var m222 = new Matrix(110, 110);
+
+            var tasks = new List<Task<Matrix>>();
+            tasks.Add(Task.Run(() => Matrix.Dot(m1, m2)));
+            tasks.Add(Task.Run(() => Matrix.Dot(m11, m22)));
+            tasks.Add(Task.Run(() => Matrix.Dot(m111, m222)));
+
+            Task.WaitAll(tasks.ToArray());
+
+            Assert.AreEqual(tasks[0].Result[0, 0], 19);
+            Assert.AreEqual(tasks[0].Result[0, 1], 22);
+            Assert.AreEqual(tasks[0].Result[1, 0], 43);
+            Assert.AreEqual(tasks[0].Result[1, 1], 50);
+            // not crashed with "CUDA out of memory" = success
+        }
+
         private int TrainAndTestNeuralNetwork(NeuralNetwork nn, string[] trainDataList, string[] testDataList, int epochsCount = 1)
         {
 
